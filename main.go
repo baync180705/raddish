@@ -26,6 +26,7 @@ func main() {
 		}
 
 		go func(conn net.Conn) {
+			fmt.Fprint(conn, ">> ")
 			defer conn.Close()
 
 			scanner := bufio.NewScanner(conn)
@@ -65,9 +66,14 @@ func main() {
 					resp, code := raddish.LISTKEYS(parsedCmd.db)
 					fmt.Fprintln(conn, resp)
 					fmt.Fprintln(conn, code)
+				case "EXIT":
+					fmt.Fprintln(conn, "connection terminated, see ya !")
+					return
 				default:
 					fmt.Fprintf(conn, "unknown command - %s\n", parsedCmd.op)
 				}
+
+				fmt.Fprint(conn, ">> ")
 			}
 		}(conn)
 	}

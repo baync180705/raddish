@@ -63,6 +63,8 @@ func Parse(commands []string) (*parsedCmd, error) {
 		}
 		db := args[0]
 		return &parsedCmd{op: op, db: db}, nil
+	case "EXIT":
+		return &parsedCmd{op: op}, nil
 	default:
 		return &parsedCmd{}, errors.New("unknown command")
 	}

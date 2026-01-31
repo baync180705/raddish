@@ -9,13 +9,11 @@ import (
 type Raddish struct {
 	mu   sync.Mutex
 	db   map[string]*registry
-	list []string
 }
 
 type registry struct {
 	mu       sync.RWMutex
 	register map[string]string
-	list     []string
 }
 
 func INIT() *Raddish {
@@ -35,7 +33,6 @@ func (r *Raddish) CREATE(k string) int {
 	r.db[k] = &registry{
 		register: make(map[string]string),
 	}
-	r.list = append(r.list, k)
 	return 1
 }
 
@@ -52,9 +49,6 @@ func (r *Raddish) SET(dbName string, k string, v string) int {
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
 	registry.register[k] = v
-
-	registry.list = append(registry.list, k)
-
 	return 1
 }
 
@@ -105,12 +99,18 @@ func (r *Raddish) DEL(dbName string, k string) int {
 func (r *Raddish) LISTDB() (string, int) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if len(r.list) == 0 {
+	keys := make([]string, 0, len(r.db))
+
+	for k := range r.db {
+		keys = append(keys, k)
+	}
+
+	if len(keys) == 0 {
 		msg := "No DBs available, use CREATE <dbname> to create a DB"
 		return msg, 0
 	}
 
-	res := strings.Join(r.list, "\n")
+	res := strings.Join(keys, "\n")
 	return res, 1
 }
 
@@ -125,11 +125,17 @@ func (r *Raddish) LISTKEYS(dbName string) (string, int) {
 	registry.mu.RLock()
 	defer registry.mu.RUnlock()
 
-	if len(registry.list) == 0 {
+	keys := make([]string, 0, len(registry.register))
+
+	for k := range registry.register {
+		keys = append(keys, k)
+	}
+
+	if len(keys) == 0 {
 		msg := "No keys exist in the mentioned DB, use SET <dbname> <key> <value> to set a key"
 		return msg, 0
 	}
 
-	res := strings.Join(registry.list, "\n")
+	res := strings.Join(keys, "\n")
 	return res, 1
 }
