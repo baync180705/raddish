@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 )
 
 func main() {
@@ -36,10 +37,11 @@ func main() {
 
 				if err != nil {
 					fmt.Println(err)
+					fmt.Fprintln(conn, err)
 					continue
 				}
 
-				switch parsedCmd.op {
+				switch strings.ToUpper(parsedCmd.op) {
 				case "PING":
 					fmt.Fprintln(conn, "PONG")
 				case "CREATE":
@@ -55,6 +57,16 @@ func main() {
 				case "DEL":
 					code := raddish.DEL(parsedCmd.db, parsedCmd.k)
 					fmt.Fprintln(conn, code)
+				case "LISTDB":
+					resp, code := raddish.LISTDB()
+					fmt.Fprintln(conn, resp)
+					fmt.Fprintln(conn, code)
+				case "LISTKEYS":
+					resp, code := raddish.LISTKEYS(parsedCmd.db)
+					fmt.Fprintln(conn, resp)
+					fmt.Fprintln(conn, code)
+				default:
+					fmt.Fprintf(conn, "unknown command - %s\n", parsedCmd.op)
 				}
 			}
 		}(conn)

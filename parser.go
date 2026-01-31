@@ -24,7 +24,7 @@ func Parse(commands []string) (*parsedCmd, error) {
 	op := commands[0]
 	args := commands[1:]
 
-	switch op {
+	switch strings.ToUpper(op) {
 	case "PING":
 		return &parsedCmd{op: op}, nil
 	case "CREATE":
@@ -55,7 +55,15 @@ func Parse(commands []string) (*parsedCmd, error) {
 		db := args[0]
 		k := args[1]
 		return &parsedCmd{op: op, db: db, k: k}, nil
+	case "LISTDB":
+		return &parsedCmd{op: op}, nil
+	case "LISTKEYS":
+		if len(args) != 1 {
+			return &parsedCmd{}, errors.New("usage: LISTKEYS <dbname>")
+		}
+		db := args[0]
+		return &parsedCmd{op: op, db: db}, nil
 	default:
-		return &parsedCmd{}, errors.New("Unknown Command")
+		return &parsedCmd{}, errors.New("unknown command")
 	}
 }
