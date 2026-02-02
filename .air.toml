@@ -1,0 +1,9 @@
+[build]
+  cmd = "go build -o tmp/main cmd/server/main.go"  
+  bin = "./tmp/main"  
+  delay = 1000
+  exclude_dir = ["tmp"]
+  include_ext = ["go"]
+
+[misc]
+  clean_on_exit = true

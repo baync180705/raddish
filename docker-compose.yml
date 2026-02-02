@@ -1,0 +1,11 @@
+services:
+  raddish:
+    image: cosmtrek/air
+    container_name: raddish_dev
+    volumes:
+      - .:/app 
+    working_dir: /app
+    ports:
+      - "1112:1112"
+    environment:
+      - ENV=dev
