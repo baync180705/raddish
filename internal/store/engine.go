@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+
+	"github.com/baync180705/raddish/internal/msg"
 )
 
 type Raddish struct {
-	mu   sync.Mutex
-	db   map[string]*registry
+	mu sync.Mutex
+	db map[string]*registry
 }
 
 type registry struct {
@@ -17,7 +19,7 @@ type registry struct {
 }
 
 func INIT() *Raddish {
-	fmt.Println("Raddish initialized successfully")
+	fmt.Println(msg.InfoRaddishInitialized)
 	return &Raddish{
 		db: make(map[string]*registry),
 	}
@@ -27,7 +29,7 @@ func (r *Raddish) CREATE(k string) int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, ok := r.db[k]; ok {
-		fmt.Println("Cannot create an existing key")
+		fmt.Println(msg.ErrorDBAlreadyExists)
 		return 0
 	}
 	r.db[k] = &registry{
@@ -42,7 +44,7 @@ func (r *Raddish) SET(dbName string, k string, v string) int {
 	r.mu.Unlock()
 
 	if !ok {
-		fmt.Println("Given DB does not exist")
+		fmt.Println(msg.ErrorDBNotFound)
 		return 0
 	}
 
@@ -58,7 +60,7 @@ func (r *Raddish) GET(dbName string, k string) (string, int) {
 	r.mu.Unlock()
 
 	if !ok {
-		fmt.Println("Given DB does not exist")
+		fmt.Println(msg.ErrorDBNotFound)
 		return "<INVALID>", 0
 	}
 
@@ -67,7 +69,7 @@ func (r *Raddish) GET(dbName string, k string) (string, int) {
 
 	val, ok := registry.register[k]
 	if !ok {
-		fmt.Println("Given key is unavailable")
+		fmt.Println(msg.ErrorKeyNotFound)
 		return "<INVALID>", 0
 	}
 	return val, 1
@@ -79,7 +81,7 @@ func (r *Raddish) DEL(dbName string, k string) int {
 	r.mu.Unlock()
 
 	if !ok {
-		fmt.Println("Given DB does not exist")
+		fmt.Println(msg.ErrorDBNotFound)
 		return 0
 	}
 
@@ -88,7 +90,7 @@ func (r *Raddish) DEL(dbName string, k string) int {
 
 	_, ok = registry.register[k]
 	if !ok {
-		fmt.Println("Given key not fonund")
+		fmt.Println(msg.ErrorKeyNotFoundDel)
 		return 0
 	}
 
@@ -106,8 +108,7 @@ func (r *Raddish) LISTDB() (string, int) {
 	}
 
 	if len(keys) == 0 {
-		msg := "No DBs available, use CREATE <dbname> to create a DB"
-		return msg, 0
+		return msg.ErrorNoDBsAvailable, 0
 	}
 
 	res := strings.Join(keys, "\n")
@@ -116,9 +117,10 @@ func (r *Raddish) LISTDB() (string, int) {
 
 func (r *Raddish) LISTKEYS(dbName string) (string, int) {
 	r.mu.Lock()
-	registry, ok := r.db[dbName]; if !ok {
-		msg := "given DB does not exist"
-		return msg, 0
+	registry, ok := r.db[dbName]
+	if !ok {
+		r.mu.Unlock()
+		return msg.ErrorDBNotFound, 0
 	}
 	r.mu.Unlock()
 
@@ -132,8 +134,7 @@ func (r *Raddish) LISTKEYS(dbName string) (string, int) {
 	}
 
 	if len(keys) == 0 {
-		msg := "No keys exist in the mentioned DB, use SET <dbname> <key> <value> to set a key"
-		return msg, 0
+		return msg.ErrorNoKeysInDB, 0
 	}
 
 	res := strings.Join(keys, "\n")
