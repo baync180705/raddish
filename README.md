@@ -48,7 +48,7 @@ go build -o raddish
 You should see:
 
 ```text
-Raddish initialized successfully
+(info) Raddish initialized successfully
 ```
 
 ---

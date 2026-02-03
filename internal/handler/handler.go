@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/baync180705/raddish/internal/msg"
 	"github.com/baync180705/raddish/internal/resp"
 	"github.com/baync180705/raddish/internal/store"
 )
@@ -21,7 +22,7 @@ func New(s *store.Raddish) *Handler {
 func (h *Handler) HandleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	fmt.Fprint(conn, ">> ")
+	fmt.Fprint(conn, msg.InfoPrompt)
 
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
@@ -31,20 +32,20 @@ func (h *Handler) HandleConnection(conn net.Conn) {
 
 		if err != nil {
 			fmt.Fprintln(conn, err)
-			fmt.Fprint(conn, ">> ")
+			fmt.Fprint(conn, msg.InfoPrompt)
 			continue
 		}
 
 		h.executeCommand(conn, ParsedCmd)
 
-		fmt.Fprint(conn, ">> ")
+		fmt.Fprint(conn, msg.InfoPrompt)
 	}
 }
 
 func (h *Handler) executeCommand(conn net.Conn, cmd *resp.ParsedCmd) {
 	switch strings.ToUpper(cmd.Op) {
 	case "PING":
-		fmt.Fprintln(conn, "PONG")
+		fmt.Fprintln(conn, msg.InfoPong)
 	case "CREATE":
 		code := h.store.CREATE(cmd.Db)
 		fmt.Fprintln(conn, code)
@@ -52,23 +53,25 @@ func (h *Handler) executeCommand(conn net.Conn, cmd *resp.ParsedCmd) {
 		code := h.store.SET(cmd.Db, cmd.K, cmd.V)
 		fmt.Fprintln(conn, code)
 	case "GET":
-		resp, code := h.store.GET(cmd.Db, cmd.K)
-		fmt.Fprintln(conn, resp)
+		respStr, code := h.store.GET(cmd.Db, cmd.K)
+		fmt.Fprintln(conn, respStr)
 		fmt.Fprintln(conn, code)
 	case "DEL":
 		code := h.store.DEL(cmd.Db, cmd.K)
 		fmt.Fprintln(conn, code)
 	case "LISTDB":
-		resp, code := h.store.LISTDB()
-		fmt.Fprintln(conn, resp)
+		respStr, code := h.store.LISTDB()
+		fmt.Fprintln(conn, respStr)
 		fmt.Fprintln(conn, code)
 	case "LISTKEYS":
-		resp, code := h.store.LISTKEYS(cmd.Db)
-		fmt.Fprintln(conn, resp)
+		respStr, code := h.store.LISTKEYS(cmd.Db)
+		fmt.Fprintln(conn, respStr)
 		fmt.Fprintln(conn, code)
 	case "EXIT":
-		fmt.Fprintln(conn, "connection terminated, see ya !")
+		fmt.Fprintln(conn, msg.InfoExit)
 		conn.Close()
 		return
+	default:
+		fmt.Fprintf(conn, msg.ErrorUnknownCommandFmt+"\n", cmd.Op)
 	}
 }
